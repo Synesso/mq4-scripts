@@ -10,8 +10,8 @@
 #property indicator_chart_window
 
 #property indicator_buffers 1
-#property indicator_color1 clrGreenYellow
-#property indicator_width1 2
+#property indicator_color1 clrGreen
+#property indicator_width1 1
 
 double child[];
 
@@ -58,10 +58,16 @@ int OnCalculate(const int rates_total,
   {
 //---
 
-  int limit = MathMax(2, rates_total - prev_calculated);
+  int limit;
+  if (prev_calculated == 0) {
+    limit = rates_total - 1;
+  } else {
+    limit = rates_total - prev_calculated + 1;
+  }
+
   for (int i=1; i < limit; i++) {
     if (i+1 < limit && High[i+1]>High[i] && Low[i+1]<Low[i]) {
-      child[i]=High[i];
+      child[i]=High[i] + 0.005;
       if (i==1) {
         Alert("Inside Bar formed on " + Symbol());
       }
@@ -72,4 +78,3 @@ int OnCalculate(const int rates_total,
    return(rates_total);
   }
 //+------------------------------------------------------------------+
-
