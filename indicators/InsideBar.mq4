@@ -67,14 +67,11 @@ int OnCalculate(const int rates_total,
 
   for (int i=1; i < limit; i++) {
     if (i+1 < limit && High[i+1]>High[i] && Low[i+1]<Low[i]) {
-      child[i]=High[i] + 0.005;
+      child[i]=High[i] + 0.002;
       if (i==1) {
-        Alert("Inside Bar formed on " + Symbol());
+       SendNotification("" + Symbol() + " InsideBar formed");
       }
     }
   }
-//   for(i=1; i<=InpAtrPeriod; i++)
-//--- return value of prev_calculated for next call
    return(rates_total);
   }
-//+------------------------------------------------------------------+
