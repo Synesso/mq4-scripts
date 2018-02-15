@@ -69,7 +69,7 @@ int OnCalculate(const int rates_total,
     if (i+1 < limit && High[i+1]>High[i] && Low[i+1]<Low[i]) {
       child[i]=High[i] + 0.002;
       if (i==1) {
-       SendNotification("" + Symbol() + " InsideBar formed");
+       SendNotification(Symbol() + " " + DoubleToStr(Period()) + " InsideBar formed");
       }
     }
   }
