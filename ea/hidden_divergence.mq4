@@ -4,6 +4,8 @@
 //--- input parameters
 input int period = 21;
 input int rsi_period = 14;
+input double minstoplevel = 1000.0;
+
 extern double Lot = 0.1;
 extern int slippage = 10,
            magic = 62;
@@ -19,6 +21,10 @@ int OnInit() {
   return(0);
 }
 
+/*
+ * Checks once per 10 minutes and trades at most once per candle.
+ * Has a SL=100 and TP=100
+ */
 void OnTick() {
 
     int block = Minute() / 6;
@@ -43,14 +49,20 @@ void OnTick() {
             maxPrice = MathMax(maxPrice, price);
         }
         
+        // Print("currentPrice="+DoubleToStr(currentPrice)+", currentRSI="+DoubleToStr(currentRSI)+", minRSI="+minRSI+", maxRSI="+maxRSI+", minPrice="+minPrice+", maxPrice="+maxPrice);
+        
         if (currentRSI == minRSI && currentPrice != minPrice) {
-            if (OrderSend(Symbol(),OP_BUY,Lot,NormalizeDouble(Ask,Digits),slippage,0.0,0.0,NULL,magic)==-1) Print(GetLastError());
+            double sl = NormalizeDouble(Bid - minstoplevel * Point, Digits);
+            double tp = NormalizeDouble(Bid + minstoplevel * Point, Digits);
+            if (OrderSend(Symbol(),OP_BUY,Lot,NormalizeDouble(Ask,Digits),slippage,sl,tp,NULL,magic)==-1) Print(GetLastError());
             lastSignalBars = Bars;
             Print("Buying when RSI is at " + DoubleToStr(currentRSI));
         }
 
         else if (currentRSI == maxRSI && currentPrice != maxPrice) {
-            if (OrderSend(Symbol(),OP_SELL,Lot,NormalizeDouble(Bid,Digits),slippage,0.0,0.0,NULL,magic)==-1) Print(GetLastError());
+            double sl = NormalizeDouble(Ask + minstoplevel * Point, Digits);
+            double tp = NormalizeDouble(Ask - minstoplevel * Point, Digits);
+            if (OrderSend(Symbol(),OP_SELL,Lot,NormalizeDouble(Bid,Digits),slippage,sl,tp,NULL,magic)==-1) Print(GetLastError());
             lastSignalBars = Bars;
         }
 
