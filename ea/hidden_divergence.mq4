@@ -22,12 +22,11 @@ int OnInit() {
 }
 
 /*
- * Checks once per 10 minutes and trades at most once per candle.
- * Has a SL=100 and TP=100
+ * Checks once per hour and notifies most once per candle.
  */
 void OnTick() {
 
-    int block = Minute() / 60;
+    int block = Hour();
 
     if (lastBlock != block && lastSignalBars != Bars) {
         lastBlock = block;
@@ -49,25 +48,14 @@ void OnTick() {
             maxPrice = MathMax(maxPrice, price);
         }
         
-        // Print("currentPrice="+DoubleToStr(currentPrice)+", currentRSI="+DoubleToStr(currentRSI)+", minRSI="+minRSI+", maxRSI="+maxRSI+", minPrice="+minPrice+", maxPrice="+maxPrice);
-        
         if (currentRSI == minRSI && currentPrice != minPrice) {
-            double sl = NormalizeDouble(Bid - minstoplevel * Point, Digits);
-            double tp = NormalizeDouble(Bid + minstoplevel * Point, Digits);
-            if (OrderSend(Symbol(),OP_BUY,Lot,NormalizeDouble(Ask,Digits),slippage,sl,tp,NULL,magic)==-1) Print(GetLastError());
+            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 3));
             lastSignalBars = Bars;
-            Print("Buying when RSI is at " + DoubleToStr(currentRSI));
         }
 
         else if (currentRSI == maxRSI && currentPrice != maxPrice) {
-            double sl = NormalizeDouble(Ask + minstoplevel * Point, Digits);
-            double tp = NormalizeDouble(Ask - minstoplevel * Point, Digits);
-            if (OrderSend(Symbol(),OP_SELL,Lot,NormalizeDouble(Bid,Digits),slippage,sl,tp,NULL,magic)==-1) Print(GetLastError());
+            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 3));
             lastSignalBars = Bars;
         }
-
-
-        //SendNotification("" + Symbol() + " RSI " + DoubleToStr(RSI0, 3) + " has crossed above " + DoubleToStr(above, 0));
-
     }
 }
