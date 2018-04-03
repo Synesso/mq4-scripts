@@ -27,7 +27,7 @@ int OnInit() {
  */
 void OnTick() {
 
-    int block = Minute() / 6;
+    int block = Minute() / 60;
 
     if (lastBlock != block && lastSignalBars != Bars) {
         lastBlock = block;
