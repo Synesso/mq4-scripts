@@ -49,12 +49,12 @@ void OnTick() {
         }
         
         if (currentRSI == minRSI && currentPrice != minPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 3));
+            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 5));
             lastSignalBars = Bars;
         }
 
         else if (currentRSI == maxRSI && currentPrice != maxPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 3));
+            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + "), RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 5));
             lastSignalBars = Bars;
         }
     }
