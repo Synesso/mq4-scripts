@@ -7,6 +7,11 @@ input int rsi_period = 14;
 
 int lastSignalBars = -1;
 
+double rsiPreviousHigh = 0.0,
+       rsiPreviousLow = 0.0,
+       pricePreviousHigh = 0.0,
+       pricePreviousLow = 0.0;
+
 /*
  * Checks once per hour and notifies most once per candle.
  */
@@ -15,86 +20,49 @@ void OnTick() {
     if (lastSignalBars != Bars) {
         lastSignalBars = Bars;
 
-        double rsi_lows[];
-        double rsi_highs[];
-        double price_lows[];
-        double price_highs[];
+        // RSIs
+        double rsi_1 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 1);
+        double rsi_2 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 2);
+        double rsi_3 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 3);
 
-        ArrayResize(rsi_lows, 0);
-        ArrayResize(rsi_highs, 0);
-        ArrayResize(price_lows, 0);
-        ArrayResize(price_highs, 0);
+        bool rsiHigh = rsi_1 < rsi_2 && rsi_3 < rsi_2;
+        bool rsiLowerHigh = rsiHigh && rsiPreviousHigh != 0.0 && rsi_2 < rsiPreviousHigh;
 
-        for (int i = 2; i < MathMin(period + 1, Bars); i++) {
-            double a = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, i - 1);
-            double b = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, i);
-            double c = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, i + 1);
-            if (a < b && b > c && b >= 65.0) {
-                int l = ArraySize(rsi_highs);
-                ArrayResize(rsi_highs, l + 1);
-                rsi_highs[l] = b;
-            } else if (a > b && b < c && a < 35.0) {
-                int l = ArraySize(rsi_lows);
-                ArrayResize(rsi_lows, l + 1);
-                rsi_lows[l] = b;
-            }
+        bool rsiLow = rsi_1 > rsi_2 && rsi_3 > rsi_2;
+        bool rsiHigherLow = rsiLow && rsiPreviousLow != 0.0 && rsi_2 > rsiPreviousLow;
 
-            a = High[i - 1];
-            b = High[i];
-            c = High[i + 1];
-            if (a < b && b > c) {
-                int l = ArraySize(price_highs);
-                ArrayResize(price_highs, l + 1);
-                price_highs[l] = b;
-            }
-            
-            a = Low[i - 1];
-            b = Low[i];
-            c = Low[i + 1];
-            if (a > b && b < c) {
-                int l = ArraySize(price_lows);
-                ArrayResize(price_lows, l + 1);
-                price_lows[l] = b;
-            }
+        // Prices
+        bool priceHigh = High(1) < High(2) && High(3) < High(2);
+        bool priceHigherHigh = priceHigh && pricePreviousHigh != 0.0 && High(2) > pricePreviousHigh;
+
+        bool priceLow = Low(1) > Low(2) && Low(3) > Low(2);
+        bool priceLowerLow = priceLow && pricePreviousLow != 0.0 && Low(2) < pricePreviousLow;
+
+        // Set state for next iteration
+        if (rsiHigh) {
+            rsiPreviousHigh = rsi_2;
+        } else if (rsiLow) {
+            rsiPreviousLow = rsi_2;
         }
 
-        int rsi_peak = JustPeaked();
-
-        if (rsi_peak == 1 && ArraySize(rsi_highs) >= 2 && rsi_highs[0] < rsi_highs[1] && ArraySize(price_highs) >= 2 && price_highs[0] > price_highs[1]) {
-            Print("" + _Symbol + " RSI Divergence(" + period + ") SHORT - Price higher highs (" + 
-                price_highs[1] +", " + price_highs[0]+"), RSI lower highs (" + rsi_highs[1] +", "+ rsi_highs[0]+")");
+        if (priceHigh) {
+            pricePreviousHigh = High(2);
+        } else if (priceLow) {
+            pricePreviousLow = Low(2);
         }
 
-        if (rsi_peak == -1 && ArraySize(rsi_lows) >= 2 && rsi_lows[0] > rsi_lows[1] && ArraySize(price_lows) >= 2 && price_lows[0] < price_lows[1]) {
-            Print("" + _Symbol + " RSI Divergence(" + period + ") LONG - Price lower lows (" + 
-                price_lows[1] +", " + price_lows[0]+"), RSI higher lows (" + rsi_lows[1] +", "+ rsi_lows[0]+")");
+        if (priceHigherHigh && rsiLowerHigh) {
+            SendNotification("" + Symbol() + " RSI Divergence(" + period + ") Bearish");
+        } else if (priceLowerLow && rsiHigherLow) {
+            SendNotification("" + Symbol() + " RSI Divergence(" + period + ") Bullish");
         }
-
-
-
-/*        
-        if (currentRSI == minRSI && currentPrice != minPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + ") *long*, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 5));
-            lastSignalBars = Bars;
-        }
-
-        else if (currentRSI == maxRSI && currentPrice != maxPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + ") *short*, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 5));
-            lastSignalBars = Bars;
-        }
-*/
     }
 }
 
-int JustPeaked() {
-    double a = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 1;
-    double b = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 2);
-    double c = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 3);
-    if (a < b && b > c) {
-        return(1);
-    } else if (a < b && b > c) {
-        return(-1);
-    } else {
-        return(0);
-    }
+double High(int idx) {
+    return(MathMax(Close[idx], Open[idx]));
+}
+
+double Low(int idx) {
+    return(MathMin(Close[idx], Open[idx]));
 }
