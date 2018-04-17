@@ -2,7 +2,7 @@
 #property strict
 
 //--- input parameters
-input int period = 21;
+input int period = 60;
 input int rsi_period = 14;
 
 int lastSignalBars = -1;
@@ -17,52 +17,34 @@ double rsiPreviousHigh = 0.0,
  */
 void OnTick() {
 
+    // todo - BullDiv when >= 35.0, Bear when <= 65.0
+
     if (lastSignalBars != Bars) {
         lastSignalBars = Bars;
 
-        // RSIs
-        double rsi_1 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 1);
-        double rsi_2 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 2);
-        double rsi_3 = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 3);
+        double lastRSI = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, 1);
+        double lastPrice = Close[1];
 
-        bool rsiHigh = rsi_1 < rsi_2 && rsi_3 < rsi_2;
-        bool rsiLowerHigh = rsiHigh && rsiPreviousHigh != 0.0 && rsi_2 < rsiPreviousHigh;
+        bool lowestRSI = true;
+        bool highestRSI = true;
+        bool lowestPrice = true;
+        bool highestPrice = true;
 
-        bool rsiLow = rsi_1 > rsi_2 && rsi_3 > rsi_2;
-        bool rsiHigherLow = rsiLow && rsiPreviousLow != 0.0 && rsi_2 > rsiPreviousLow;
+        Print("rsi="+lastRSI+", price="+lastPrice);
 
-        // Prices
-        bool priceHigh = High(1) < High(2) && High(3) < High(2);
-        bool priceHigherHigh = priceHigh && pricePreviousHigh != 0.0 && High(2) > pricePreviousHigh;
-
-        bool priceLow = Low(1) > Low(2) && Low(3) > Low(2);
-        bool priceLowerLow = priceLow && pricePreviousLow != 0.0 && Low(2) < pricePreviousLow;
-
-        // Set state for next iteration
-        if (rsiHigh) {
-            rsiPreviousHigh = rsi_2;
-        } else if (rsiLow) {
-            rsiPreviousLow = rsi_2;
+        for (int i = 2; i < MathMin(period, Bars) && (lowestPrice || highestPrice); i++) {
+            double rsi = iRSI(_Symbol, 0, rsi_period, PRICE_CLOSE, i);
+            lowestRSI = lowestRSI && rsi >= lastRSI;
+            lowestPrice = lowestPrice && Close[i] >= lastPrice;
+            highestRSI = highestRSI && rsi <= lastRSI;
+            highestPrice = highestPrice && Close[i] <= lastPrice;
+            Print("i="+i+", rsi="+rsi+", lowestRSI="+lowestRSI+", lowestPrice="+lowestPrice+", highestRSI="+highestRSI+", highestPrice="+highestPrice);
         }
 
-        if (priceHigh) {
-            pricePreviousHigh = High(2);
-        } else if (priceLow) {
-            pricePreviousLow = Low(2);
-        }
-
-        if (priceHigherHigh && rsiLowerHigh) {
-            SendNotification("" + Symbol() + " RSI Divergence(" + period + ") Bearish");
-        } else if (priceLowerLow && rsiHigherLow) {
+        if (lowestPrice && !lowestRSI) {
             SendNotification("" + Symbol() + " RSI Divergence(" + period + ") Bullish");
+        } else if (highestPrice && !highestRSI) {
+            SendNotification("" + Symbol() + " RSI Divergence(" + period + ") Bearish");
         }
     }
-}
-
-double High(int idx) {
-    return(MathMax(Close[idx], Open[idx]));
-}
-
-double Low(int idx) {
-    return(MathMin(Close[idx], Open[idx]));
 }

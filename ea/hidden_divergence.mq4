@@ -13,14 +13,6 @@ extern int slippage = 10,
 int lastBlock = -1;
 int lastSignalBars = -1;
 
-int OnInit() {
-  Print(MarketInfo(Symbol(), MODE_LOTSIZE));
-  Print(MarketInfo(Symbol(), MODE_MINLOT));
-  Print(MarketInfo(Symbol(), MODE_LOTSTEP));
-  Print(MarketInfo(Symbol(), MODE_MAXLOT));
-  return(0);
-}
-
 /*
  * Checks once per hour and notifies most once per candle.
  */
@@ -49,12 +41,12 @@ void OnTick() {
         }
         
         if (currentRSI == minRSI && currentPrice != minPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + ") *long*, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 5));
+            SendNotification("" + Symbol() + " " + Period() + " SB Hidden Divergence(" + period + ") Long, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(min), Price=" + DoubleToStr(currentPrice, 5));
             lastSignalBars = Bars;
         }
 
         else if (currentRSI == maxRSI && currentPrice != maxPrice) {
-            SendNotification("" + Symbol() + " SB Hidden Divergence(" + period + ") *short*, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 5));
+            SendNotification("" + Symbol() + " " + Period() + "  SB Hidden Divergence(" + period + ") Short, RSI(" + rsi_period + ")=" + DoubleToStr(currentRSI, 3) + "(max), Price=" + DoubleToStr(currentPrice, 5));
             lastSignalBars = Bars;
         }
     }
