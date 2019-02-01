@@ -19,9 +19,11 @@ void OnTick() {
   NumBars = Bars;
 
   if (High[1] > High[2] && Close[1] < Close[2] && (High[1] - Low[1]) > avg_range()) {
-    SendNotification("" + Symbol() + " " + Period() + " J-Spike. Higher high, close below & range > avg of last 20");
+    SendNotification("" + Symbol() + " " + Period() + " J-Spike. Higher high ("+High[1]+">"+High[2]+"), close below (" +
+      Close[1] +"<"+ Close[2]+") & range > avg of last 20 ("+(High[1]-Low[1])+">"+avg_range()+")");
   } else if (Low[1] < Low[2] && Close[1] > Close[2] && (High[1] - Low[1]) > avg_range()) {
-    SendNotification("" + Symbol() + " " + Period() + " J-Spike. Lower low, close above & range > avg of last 20");
+    SendNotification("" + Symbol() + " " + Period() + " J-Spike. Lower low ("+Low[1]+"<"+Low[2]+"), close above (" +
+      Close[1] +">"+ Close[2]+") & range > avg of last 20 ("+(High[1]-Low[1])+">"+avg_range()+")");
   }
 }
 
