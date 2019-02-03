@@ -5,6 +5,7 @@ input double level_a = 1.0517;
 input double level_b = 1.0515;
 input double level_c = 1.0510;
 input double level_d = 1.0500;
+input int    buffer  = 5;
 
 int count_zone_1_from_below = 0;
 int count_zone_1_from_above = 0;
@@ -15,17 +16,26 @@ double zone_boundaries[4];
 
 int num_bars_when_last_notified = 0;
 
+long chart_id;
 
 /*
-Send alert when price moves above b from below, and the previous candle did not enter zone 1 - $Symbol $nth attempt at approaching resistance
-Send alert when price moves below c from above, and the previous candle did not enter zone 3 - $Symbol $nth attempt at approaching support
-Send alert when price moves from above, and the previous candle did not enter zone 1         - $Symbol coming down to resistance after topside break $nth attempt
-Send alert when price moves from below, and the previous candle did not enter zone 3         - $Symbol coming up to support after downside break $nth attempt
+Send alert when price moves above b from below, and the previous candle did not enter zone 1 
+    - $Symbol $period candle $nth attempt at approaching resistance
+Send alert when price moves below c from above, and the previous candle did not enter zone 3
+    - $Symbol $period candle $nth attempt at approaching support
+Send alert when price moves from above, and the previous candle did not enter zone 1         
+    - $Symbol $period candle coming down to resistance after topside break $nth attempt
+Send alert when price moves from below, and the previous candle did not enter zone 3
+    - $Symbol $period candle coming up to support after downside break $nth attempt
+todo: Send alert when close is buffer pips above level_a, and open is < (level_a + buffer)
+    - $Symbol $period candle closed above resistance.
+todo: Send alert when close is buffer pips below level_d, and open is > (level_d - buffer)
+    - $Symbol $period candle closed below support.
 */
 
-// TODO - draw lines at input levels
-
 int OnInit() {
+    chart_id = ChartID();
+
     // configure zones boundaries from input levels.
     zone_boundaries[0] = level_a;
     zone_boundaries[1] = level_b;
@@ -36,7 +46,23 @@ int OnInit() {
     Print("[breakout] boundaries={", zone_boundaries[0], ", ", zone_boundaries[1], ", ", 
         zone_boundaries[2], ", ", zone_boundaries[3], "}");
 
+    ObjectCreate("zone_boundary_0", OBJ_HLINE, 0, Time[0], zone_boundaries[0], 0, 0);
+    ObjectCreate("zone_boundary_1", OBJ_HLINE, 0, Time[0], zone_boundaries[1], 0, 0);
+    ObjectCreate("zone_boundary_2", OBJ_HLINE, 0, Time[0], zone_boundaries[2], 0, 0);
+    ObjectCreate("zone_boundary_3", OBJ_HLINE, 0, Time[0], zone_boundaries[3], 0, 0);
+    ObjectSetInteger(chart_id, "zone_boundary_0", OBJPROP_COLOR, clrRed);
+    ObjectSetInteger(chart_id, "zone_boundary_1", OBJPROP_COLOR, clrRed);
+    ObjectSetInteger(chart_id, "zone_boundary_2", OBJPROP_COLOR, clrGreen);
+    ObjectSetInteger(chart_id, "zone_boundary_3", OBJPROP_COLOR, clrGreen);
+
     return(INIT_SUCCEEDED);
+}
+
+void OnDeinit(const int reason) {
+    ObjectDelete(chart_id, "zone_boundary_0");
+    ObjectDelete(chart_id, "zone_boundary_1");
+    ObjectDelete(chart_id, "zone_boundary_2");
+    ObjectDelete(chart_id, "zone_boundary_3");
 }
 
 void OnTick() {
