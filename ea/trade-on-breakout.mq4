@@ -22,17 +22,23 @@ int             order_ticket_number = 0;
 int             bars_on_chart = 0;
 
 int OnInit() {
-   if (stop_loss < open && open < take_profit) {
-       direction = LONG;
-       Print("Direction is Long");
-   } else if (stop_loss > open && open > take_profit) {
-       direction = SHORT;
-       Print("Direction is Short");
-   } else {
-       MessageBox("Exiting: Cannot determine if direction is short or long. Must match (tp > open > sl) or (tp < open < sl)");
-       ExpertRemove();
-   }
-   return(INIT_SUCCEEDED);
+    if (stop_loss < open && open < take_profit) {
+        direction = LONG;
+        Print("Direction is Long");
+    } else if (stop_loss > open && open > take_profit) {
+        direction = SHORT;
+        Print("Direction is Short");
+    } else {
+        MessageBox("Exiting: Cannot determine if direction is short or long. Must match (tp > open > sl) or (tp < open < sl)");
+        ExpertRemove();
+    }
+
+    double min_stop_level = MarketInfo(Symbol(), MODE_STOPLEVEL);
+    require(MathAbs(trigger - open) >= min_stop_level, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop);
+    require(MathAbs(open - stop_loss) >= min_stop_level, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop);
+    require(MathAbs(open - take_profit) >= min_stop_level, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop);
+
+    return(INIT_SUCCEEDED);
 }
 
 void OnTick() {
@@ -49,7 +55,7 @@ void OnTick() {
             ExpertRemove();
         } else if (direction == SHORT && Close[1] < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
+            Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
             ));
             int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
