@@ -22,14 +22,15 @@ int             order_ticket_number = 0;
 int             bars_on_chart = 0;
 
 int OnInit() {
-   if (Ask < trigger) {
+   if (stop_loss < open && open < take_profit) {
        direction = LONG;
        Print("Direction is Long");
-       require(stop_loss < open && open < take_profit, "Direction is long, but SL < Open < TP does not hold true.");
-   } else {
+   } else if (stop_loss > open && open > take_profit) {
        direction = SHORT;
        Print("Direction is Short");
-       require(stop_loss > open && open > take_profit, "Direction is short, but SL > Open > TP does not hold true.");
+   } else {
+       MessageBox("Exiting: Cannot determine if direction is short or long. Must match (tp > open > sl) or (tp < open < sl)");
+       ExpertRemove();
    }
    return(INIT_SUCCEEDED);
 }
@@ -38,7 +39,7 @@ void OnTick() {
     if (isNewCandle()) {
         if (direction == LONG && Close[1] > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f",
+            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
             ));
             int ticket = OrderSend(Symbol(), OP_BUYLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
@@ -48,7 +49,7 @@ void OnTick() {
             ExpertRemove();
         } else if (direction == SHORT && Close[1] < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f",
+            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
             ));
             int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
