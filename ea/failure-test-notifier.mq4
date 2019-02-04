@@ -1,10 +1,10 @@
 #property link "chenandjem@loftinspace.com.au"
 #property strict
 
-input double level_a = 1.0517;
-input double level_b = 1.0515;
-input double level_c = 1.0510;
-input double level_d = 1.0500;
+input double level_a;
+input double level_b;
+input double level_c;
+input double level_d;
 input double buffer  = 0.0005;
 
 int count_zone_1_from_below = 0;
