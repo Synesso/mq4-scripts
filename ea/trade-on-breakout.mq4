@@ -8,7 +8,7 @@
 #property version   "1.00"
 #property strict
 
-input double    trigger = 1.145;
+input double    breakout_level = 1.145;
 input double    lots = 0.1;
 input double    open = 1.144;
 input double    stop_loss = 1.142;
@@ -33,17 +33,17 @@ int OnInit() {
         ExpertRemove();
     }
 
-    double min_stop_level = MarketInfo(Symbol(), MODE_STOPLEVEL);
-    require(MathAbs(trigger - open) >= min_stop_level, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop);
-    require(MathAbs(open - stop_loss) >= min_stop_level, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop);
-    require(MathAbs(open - take_profit) >= min_stop_level, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop);
+    double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
+    require(MathAbs(breakout_level - open) >= minimum_stop, StringFormat("Open is too close to breakout_level. Must be at least %f", minimum_stop));
+    require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
+    require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
 
     return(INIT_SUCCEEDED);
 }
 
 void OnTick() {
     if (isNewCandle()) {
-        if (direction == LONG && Close[1] > trigger) {
+        if (direction == LONG && Close[1] > breakout_level) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
@@ -53,7 +53,7 @@ void OnTick() {
                 SendNotification("Unable to create buy limit order: " + IntegerToString(GetLastError()));
             }
             ExpertRemove();
-        } else if (direction == SHORT && Close[1] < trigger) {
+        } else if (direction == SHORT && Close[1] < breakout_level) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
