@@ -13,10 +13,12 @@ input double    lots = 0.1;
 input double    open = 1.144;
 input double    stop_loss = 1.142;
 input double    take_profit = 1.148;
+input double    buffer = 0.0005;
 
 const int       LONG = 0;
 const int       SHORT = 1;
 
+double          trigger;
 int             direction;
 int             order_ticket_number = 0;
 int             bars_on_chart = 0;
@@ -24,17 +26,19 @@ int             bars_on_chart = 0;
 int OnInit() {
     if (stop_loss < open && open < take_profit) {
         direction = LONG;
-        Print("Direction is Long");
+        trigger = breakout_level + buffer;
+        Print("Direction is Long. Trigger is ", trigger);
     } else if (stop_loss > open && open > take_profit) {
         direction = SHORT;
-        Print("Direction is Short");
+        trigger = breakout_level - buffer;
+        Print("Direction is Short. Trigger is ", trigger);
     } else {
         MessageBox("Exiting: Cannot determine if direction is short or long. Must match (tp > open > sl) or (tp < open < sl)");
         ExpertRemove();
     }
 
     double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
-    require(MathAbs(breakout_level - open) >= minimum_stop, StringFormat("Open is too close to breakout_level. Must be at least %f", minimum_stop));
+    require(MathAbs(trigger - open) >= minimum_stop, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop));
     require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
     require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
 
@@ -43,7 +47,7 @@ int OnInit() {
 
 void OnTick() {
     if (isNewCandle()) {
-        if (direction == LONG && Close[1] > breakout_level) {
+        if (direction == LONG && Close[1] > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
@@ -53,7 +57,7 @@ void OnTick() {
                 SendNotification("Unable to create buy limit order: " + IntegerToString(GetLastError()));
             }
             ExpertRemove();
-        } else if (direction == SHORT && Close[1] < breakout_level) {
+        } else if (direction == SHORT && Close[1] < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
