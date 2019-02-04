@@ -51,11 +51,11 @@ int OnInit() {
     ObjectCreate("stop_loss", OBJ_HLINE, 0, Time[0], stop_loss, 0, 0);
     ObjectCreate("take_profit", OBJ_HLINE, 0, Time[0], take_profit, 0, 0);
 
-    ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrLightBlue);
+    ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrDodgerBlue);
     ObjectSetInteger(chart_id, "open", OBJPROP_STYLE, STYLE_DOT);
-    ObjectSetInteger(chart_id, "stop_loss", OBJPROP_COLOR, clrLightPink);
+    ObjectSetInteger(chart_id, "stop_loss", OBJPROP_COLOR, clrPaleVioletRed);
     ObjectSetInteger(chart_id, "stop_loss", OBJPROP_STYLE, STYLE_DOT);
-    ObjectSetInteger(chart_id, "take_profit", OBJPROP_COLOR, clrHoneydew);
+    ObjectSetInteger(chart_id, "take_profit", OBJPROP_COLOR, clrSeaGreen);
     ObjectSetInteger(chart_id, "take_profit", OBJPROP_STYLE, STYLE_DOT);
     ObjectSetInteger(chart_id, "breakout_level", OBJPROP_COLOR, clrForestGreen);
     ObjectSetInteger(chart_id, "trigger", OBJPROP_COLOR, clrForestGreen);
