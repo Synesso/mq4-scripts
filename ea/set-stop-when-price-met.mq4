@@ -4,52 +4,61 @@
 input double trigger_price;
 input double new_stop;
 
-const int state_initial = 0;
-const int state_order_found = 1;
-
 int order_ticket_number = 0;
-int state = state_initial;
+bool going_long = false;
+long chart_id;
+
+int OnInit() {
+    int num_open_orders = selectOrder();
+    require(num_open_orders == 1, "Expected exactly 1 open trade. Found " + IntegerToString(num_open_orders));
+
+    Print("[set-stop-when-price-met] Current Order: #", order_ticket_number, " ", OrderSymbol(), 
+        ", direction=", typeCode(OrderType()),
+        ", open=", DoubleToString(OrderOpenPrice()),
+        ", lots=", DoubleToString(OrderLots()),
+        ", tp=", DoubleToString(OrderTakeProfit()),
+        ", sl=", DoubleToString(OrderStopLoss())); 
+
+    Print("[set-stop-when-price-met] Config: trigger_price=", DoubleToString(trigger_price),
+        ", new_stop=", DoubleToString(new_stop));
+
+    if (OrderType() == OP_BUY) {
+        require(trigger_price > Bid, "Trigger " + DoubleToString(trigger_price) + " is less than the current Bid (" + DoubleToString(Bid) + "). It would execute immediately.");
+        require(OrderTakeProfit() == 0 || trigger_price <= OrderTakeProfit(), "Trigger " + DoubleToString(trigger_price) + " is greater than the TP. It would never execute.");
+        require(new_stop > OrderStopLoss(), "New stop loss " + DoubleToString(new_stop) + " is less than the original stop loss.");
+        require(new_stop < trigger_price, "New stop loss " + DoubleToString(new_stop) + " is greater than the trigger.");
+        going_long = true;
+    } else if (OrderType() == OP_SELL) {
+        require(trigger_price < Bid, "Trigger " + DoubleToString(trigger_price) + " is greater than the current Bid (" + DoubleToString(Bid) + "). It would execute immediately.");
+        require(OrderTakeProfit() == 0 || trigger_price >= OrderTakeProfit(), "Trigger " + DoubleToString(trigger_price) + " is less than the TP. It would never execute.");
+        require(new_stop < OrderStopLoss() || OrderStopLoss() == 0, "New stop loss " + DoubleToString(new_stop) + " is greater than the original stop loss.");
+        require(new_stop > trigger_price, "New stop loss " + DoubleToString(new_stop) + " is less than the trigger.");
+    } else {
+        require(false, "Do not know how to proceed with order of type " + IntegerToString(OrderType()));
+    }
+
+    chart_id = ChartID();
+    ObjectCreate("trigger_price", OBJ_HLINE, 0, Time[0], trigger_price, 0, 0);
+    ObjectCreate("new_stop", OBJ_HLINE, 0, Time[0], new_stop, 0, 0);
+    ObjectSetInteger(chart_id, "trigger_price", OBJPROP_COLOR, clrDodgerBlue);
+    ObjectSetInteger(chart_id, "trigger_price", OBJPROP_STYLE, STYLE_DOT);
+    ObjectSetInteger(chart_id, "new_stop", OBJPROP_COLOR, clrPaleVioletRed);
+    ObjectSetInteger(chart_id, "new_stop", OBJPROP_STYLE, STYLE_DOT);
+
+    return(INIT_SUCCEEDED);
+}
 
 void OnTick() {
-    if (state == state_initial) {
-        int num_open_orders = selectOrder();
-        ensure(num_open_orders == 1, "Expected exactly 1 open trade. Found " + IntegerToString(num_open_orders));
-        Print("Order Type: " + DoubleToString(OrderType()));
-        Print("OP_BUY=" + DoubleToString(OP_BUY) + ", OP_SELL=" + DoubleToString(OP_SELL));
-        Print("Open Price: " + DoubleToString(OrderOpenPrice())); 
-        Print("Lots: " + DoubleToString(OrderLots()));
-        Print("Take Profit: " + DoubleToString(OrderTakeProfit()));
-        Print("Stop Loss: " + DoubleToString(OrderStopLoss()));
-
-        if (OrderType() == OP_BUY) {
-            ensure(trigger_price > Ask, "Trigger price " + DoubleToString(trigger_price) + " is less than the current Ask. It would execute immediately.");
-            ensure(OrderTakeProfit() == 0 || trigger_price <= OrderTakeProfit(), "Trigger price " + DoubleToString(trigger_price) + " is greater than the real TP. It would never execute.");
-            ensure(new_stop >= OrderStopLoss(), "Break-even SL " + DoubleToString(new_stop) + " is less than the original stop loss.");
-            ensure(new_stop < trigger_price, "Break-even SL " + DoubleToString(new_stop) + " is greater than the trigger price.");
-        } else if (OrderType() == OP_SELL) {
-            ensure(trigger_price < Bid, "Trigger price " + DoubleToString(trigger_price) + " is greater than the current Bid. It would execute immediately.");
-            ensure(OrderTakeProfit() == 0 || trigger_price >= OrderTakeProfit(), "Trigger price " + DoubleToString(trigger_price) + " is less than the real TP. It would never execute.");
-            ensure(new_stop <= OrderStopLoss(), "Break-even SL " + DoubleToString(new_stop) + " is greater than the original stop loss.");
-            ensure(new_stop > trigger_price, "Break-even SL " + DoubleToString(new_stop) + " is less than the trigger price.");
-        } else {
-            die("Do not know how to proceed with order of type " + IntegerToString(OrderType()));
-        }
-        // string object_name = "interim_tp_line_" + IntegerToString(order_ticket_number);
-        // warn(ObjectCreate(ChartID(), object_name, OBJ_HLINE, 0, 0, trigger_price), "Unable to draw interim TP line: " + IntegerToString(GetLastError()));
-        // warn(ObjectSet(object_name, OBJPROP_COLOR, Green), "Unable to set interim TP line green");
-        // warn(ObjectSet(object_name, OBJPROP_STYLE, STYLE_DASH), "Unable to set interim TP line dashed");
-        state = state_order_found;
-    } else if (state == state_order_found) {
-        ensure(OrderSelect(order_ticket_number, SELECT_BY_TICKET), "Unable to select Order by ticket number");
-        if (OrderType() == OP_BUY && Ask > trigger_price) {
-            ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL");
-            MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
-            ExpertRemove();
-        } else if (OrderType() == OP_SELL && Bid < trigger_price) {
-            ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL");
-            MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
-            ExpertRemove();
-        }
+    if (going_long && Bid > trigger_price) {
+        selectOrder();
+        ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL");
+        MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
+        ExpertRemove();
+    } else if (!going_long && Bid < trigger_price) {
+        selectOrder();
+        ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
+        MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
+        ExpertRemove();
     }
 }
 
@@ -62,25 +71,37 @@ int selectOrder() {
             num_open_orders += 1;
         }
     }
-    if (num_open_orders == 1) {
-         ensure(OrderSelect(order_ticket_number, SELECT_BY_TICKET), "trouble selecting previously found order");
-    }
+    ensure(OrderSelect(order_ticket_number, SELECT_BY_TICKET), "trouble selecting previously found order");
     return num_open_orders;
 }
 
-void warn(bool predicate, string msg) {
+bool require(bool predicate, string msg) {
     if (!predicate) {
-        Print("WARNING: " + msg);
+        MessageBox("Exiting: " + msg + ": " + IntegerToString(GetLastError()));
+        ExpertRemove();
+    }
+    return predicate;
+}
+
+bool ensure(bool predicate, string msg) {
+    if (!predicate) {
+        Print("Requirement failed: " + msg + ": " + IntegerToString(GetLastError()));
+        SendNotification("Requirement failed: " + msg + ": " + IntegerToString(GetLastError()));
+    }
+    return predicate;
+}
+
+string typeCode(double code) {
+    if (code == 0.0) {
+        return "Long";
+    } else if (code == 1.0) {
+        return "Short";
+    } else {
+        return "???";
     }
 }
 
-void ensure(bool predicate, string msg) {
-    if (!predicate) {
-        die(msg);
-    }
-}
-
-void die(string msg) {
-    MessageBox("Exiting: " + msg + ": " + IntegerToString(GetLastError()));
-    ExpertRemove();
+void OnDeinit(const int reason) {
+    ObjectDelete(chart_id, "trigger_price");
+    ObjectDelete(chart_id, "new_stop");
 }
