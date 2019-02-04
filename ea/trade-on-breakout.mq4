@@ -38,6 +38,9 @@ void OnTick() {
     if (isNewCandle()) {
         if (direction == LONG && Close[1] > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
+            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f",
+                Symbol(), lots, open, slippage, stop_loss, take_profit
+            ));
             int ticket = OrderSend(Symbol(), OP_BUYLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
             if (ticket < 0) {
                 SendNotification("Unable to create buy limit order: " + IntegerToString(GetLastError()));
@@ -45,6 +48,9 @@ void OnTick() {
             ExpertRemove();
         } else if (direction == SHORT && Close[1] < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
+            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f",
+                Symbol(), lots, open, slippage, stop_loss, take_profit
+            ));
             int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
             if (ticket < 0) {
                 SendNotification("Unable to create sell limit order: " + IntegerToString(GetLastError()));
