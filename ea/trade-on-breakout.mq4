@@ -8,11 +8,11 @@
 #property version   "1.00"
 #property strict
 
-input double    breakout_level = 1.145;
+input double    breakout_level;
 input double    lots = 0.1;
-input double    open = 1.144;
-input double    stop_loss = 1.142;
-input double    take_profit = 1.148;
+input double    open;
+input double    stop_loss;
+input double    take_profit;
 input double    buffer = 0.0005;
 
 const int       LONG = 0;
@@ -20,8 +20,9 @@ const int       SHORT = 1;
 
 double          trigger;
 int             direction;
-int             order_ticket_number = 0;
-int             bars_on_chart = 0;
+int             order_ticket_number;
+int             bars_on_chart;
+long            chart_id;
 
 int OnInit() {
     if (stop_loss < open && open < take_profit) {
@@ -37,10 +38,28 @@ int OnInit() {
         ExpertRemove();
     }
 
+    chart_id = ChartID();
+    
     double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
     require(MathAbs(trigger - open) >= minimum_stop, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop));
     require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
     require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
+
+    ObjectCreate("breakout_level", OBJ_HLINE, 0, Time[0], breakout_level, 0, 0);
+    ObjectCreate("trigger", OBJ_HLINE, 0, Time[0], trigger, 0, 0);
+    ObjectCreate("open", OBJ_HLINE, 0, Time[0], open, 0, 0);
+    ObjectCreate("stop_loss", OBJ_HLINE, 0, Time[0], stop_loss, 0, 0);
+    ObjectCreate("take_profit", OBJ_HLINE, 0, Time[0], take_profit, 0, 0);
+
+    ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrLightBlue);
+    ObjectSetInteger(chart_id, "open", OBJPROP_STYLE, STYLE_DOT);
+    ObjectSetInteger(chart_id, "stop_loss", OBJPROP_COLOR, clrLightPink);
+    ObjectSetInteger(chart_id, "stop_loss", OBJPROP_STYLE, STYLE_DOT);
+    ObjectSetInteger(chart_id, "take_profit", OBJPROP_COLOR, clrHoneydew);
+    ObjectSetInteger(chart_id, "take_profit", OBJPROP_STYLE, STYLE_DOT);
+    ObjectSetInteger(chart_id, "breakout_level", OBJPROP_COLOR, clrForestGreen);
+    ObjectSetInteger(chart_id, "trigger", OBJPROP_COLOR, clrForestGreen);
+    ObjectSetInteger(chart_id, "trigger", OBJPROP_STYLE, STYLE_DASH);
 
     return(INIT_SUCCEEDED);
 }
@@ -102,4 +121,12 @@ bool ensure(bool predicate, string msg) {
         SendNotification("Requirement failed: " + msg + ": " + IntegerToString(GetLastError()));
     }
     return predicate;
+}
+
+void OnDeinit(const int reason) {
+    ObjectDelete(chart_id, "open");
+    ObjectDelete(chart_id, "stop_loss");
+    ObjectDelete(chart_id, "take_profit");
+    ObjectDelete(chart_id, "breakout_level");
+    ObjectDelete(chart_id, "trigger");
 }
