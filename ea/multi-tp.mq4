@@ -1,7 +1,7 @@
 #property link "chenandjem@loftinspace.com.au"
 #property strict
 
-input int       order_number;
+input int       order_num;
 input double    trigger;
 input double    close_lots;
 input double    move_stop;
@@ -9,20 +9,20 @@ input double    move_stop;
 bool going_long = false;
 bool stop_needs_modifying = true;
 long chart_id;
-int  active_order_number;
+int  order_number;
 
 int OnInit() {
+    order_number = order_num;
     require(OrderSelect(order_number, SELECT_BY_TICKET), "cannot select order" + IntegerToString(order_number));
-    active_order_number = order_number;
 
-    Print("[multitp] Current Order: #", active_order_number, " ", OrderSymbol(), 
+    Print("[multitp] Current Order: #", order_number, " ", OrderSymbol(), 
         ", direction=", typeCode(OrderType()),
         ", open=", DoubleToString(OrderOpenPrice()),
         ", lots=", DoubleToString(OrderLots()),
         ", tp=", DoubleToString(OrderTakeProfit()),
         ", sl=", DoubleToString(OrderStopLoss())); 
 
-    Print("[multitp] Config: active_order_number=", DoubleToString(active_order_number),
+    Print("[multitp] Config: order_number=", DoubleToString(order_number),
         ", trigger=", DoubleToString(trigger),
         ", close_lots=", DoubleToString(close_lots),
         ", move_stop=", DoubleToString(move_stop));
@@ -63,11 +63,14 @@ void OnTick() {
     if (going_long) {
         if (Bid > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            if (ensure(OrderClose(active_order_number, close_lots, Bid, slippage, Red), "Unable to close order")) {
+            string symbol = OrderSymbol();
+            double open = OrderOpenPrice();
+            double stop = OrderStopLoss();
+            double tp = OrderTakeProfit();
+            if (ensure(OrderClose(order_number, close_lots, Bid, slippage, Red), "Unable to close order")) {
                 if (stop_needs_modifying) {
-                    int num_open_orders = selectOrder();
-                    ensure(num_open_orders == 1, "Expected exactly 1 open trade. Found " + IntegerToString(num_open_orders));
-                    ensure(OrderModify(active_order_number, OrderOpenPrice(), move_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
+                    selectOrder(symbol, open, stop, tp); // it has a new order number after closing half
+                    ensure(OrderModify(order_number, OrderOpenPrice(), move_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
                 }
                 SendNotification("First TP hit. Closed out " + DoubleToString(close_lots) + " lots. Set SL to " + DoubleToString(move_stop));
                 ExpertRemove();
@@ -76,11 +79,14 @@ void OnTick() {
     } else {
         if (Ask < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            if (ensure(OrderClose(active_order_number, close_lots, Ask, slippage, Red), "Unable to close order")) {
+            string symbol = OrderSymbol();
+            double open = OrderOpenPrice();
+            double stop = OrderStopLoss();
+            double tp = OrderTakeProfit();
+            if (ensure(OrderClose(order_number, close_lots, Ask, slippage, Red), "Unable to close order")) {
                 if (stop_needs_modifying) {
-                    int num_open_orders = selectOrder();
-                    ensure(num_open_orders == 1, "Expected exactly 1 open trade. Found " + IntegerToString(num_open_orders));
-                    ensure(OrderModify(active_order_number, OrderOpenPrice(), move_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
+                    selectOrder(symbol, open, stop, tp); // it has a new order number after closing half
+                    ensure(OrderModify(order_number, OrderOpenPrice(), move_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
                 }
                 SendNotification("First TP hit. Closed out " + DoubleToString(close_lots) + " lots. Set SL to " + DoubleToString(move_stop));
                 ExpertRemove();
@@ -121,15 +127,31 @@ void OnDeinit(const int reason) {
     }
 }
 
-int selectOrder() {
+bool selectOrder(string symbol, double open, double sl, double tp) {
+    bool found = false;
+    for (int i = 0; i < OrdersTotal() && !found; i++) {
+        if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) 
+            && OrderSymbol() == symbol
+            && OrderOpenPrice() == open
+            && OrderStopLoss() == sl
+            && OrderTakeProfit() == tp) {
+
+                order_number = OrderTicket();
+                found = true;
+        }
+    }
+    return found;
+}
+
+int selectOrderOld() {
     int num_open_orders = 0;
     for (int i = 0; i < OrdersTotal(); i++) {
         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) && OrderSymbol() == Symbol()) {
-            active_order_number = OrderTicket();
-            Print("Selected ticket " + DoubleToString(active_order_number));
+            order_number = OrderTicket();
+            Print("Selected ticket " + DoubleToString(order_number));
             num_open_orders += 1;
         }
     }
-    ensure(OrderSelect(active_order_number, SELECT_BY_TICKET), "trouble selecting previously found order");
+    ensure(OrderSelect(order_number, SELECT_BY_TICKET), "trouble selecting previously found order");
     return num_open_orders;
 }
