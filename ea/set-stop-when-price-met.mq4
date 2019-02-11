@@ -1,16 +1,16 @@
 #property link "chenandjem@loftinspace.com.au"
 #property strict
 
+input int    order_ticket_number;
 input double trigger_price;
 input double new_stop;
 
-int order_ticket_number = 0;
 bool going_long = false;
 long chart_id;
 
 int OnInit() {
-    int num_open_orders = selectOrder();
-    require(num_open_orders == 1, "Expected exactly 1 open trade. Found " + IntegerToString(num_open_orders));
+
+    require(OrderSelect(order_ticket_number, SELECT_BY_TICKET), "trouble selecting previously found order");
 
     Print("[set-stop-when-price-met] Current Order: #", order_ticket_number, " ", OrderSymbol(), 
         ", direction=", typeCode(OrderType()),
@@ -50,29 +50,14 @@ int OnInit() {
 
 void OnTick() {
     if (going_long && Bid > trigger_price) {
-        selectOrder();
         ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL");
         MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
         ExpertRemove();
     } else if (!going_long && Bid < trigger_price) {
-        selectOrder();
         ensure(OrderModify(order_ticket_number, OrderOpenPrice(), new_stop, OrderTakeProfit(), OrderExpiration(), Red), "Unable to modify SL"); 
         MessageBox("Trigger hit. Set SL to " + DoubleToString(new_stop));
         ExpertRemove();
     }
-}
-
-int selectOrder() {
-    int num_open_orders = 0;
-    for (int i = 0; i < OrdersTotal(); i++) { 
-        if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) && OrderSymbol() == Symbol()) {
-            order_ticket_number = OrderTicket();
-            Print("Selected ticket " + DoubleToString(order_ticket_number));
-            num_open_orders += 1;
-        }
-    }
-    ensure(OrderSelect(order_ticket_number, SELECT_BY_TICKET), "trouble selecting previously found order");
-    return num_open_orders;
 }
 
 bool require(bool predicate, string msg) {
