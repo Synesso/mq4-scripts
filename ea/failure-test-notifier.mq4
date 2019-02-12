@@ -90,23 +90,23 @@ void OnTick() {
 
     int zone = zoneForPrice(Ask);
 
-    if (zone == 1 && !priorCandleWasInZone(1)) {
-        if (priorCandleWasInZone(0)) {
+    if (zone == 3 && !priorCandleWasInZone(3)) {
+        if (priorCandleWasInZone(4)) {
             count_zone_1_from_above += 1;
-            notify(StringFormat("%s %s candle coming down to resistance after topside break, %s attempt.", Symbol(), Period(), ordinal(count_zone_1_from_above)));
+            notify(StringFormat("%s %s candle coming down to resistance after topside break, %s attempt.", Symbol(), time(Period()), ordinal(count_zone_1_from_above)));
         } else {
             count_zone_1_from_below += 1;
-            notify(StringFormat("%s %s candle %s attempt at approaching resistance.", Symbol(), Period(), ordinal(count_zone_1_from_below)));
+            notify(StringFormat("%s %s candle %s attempt at approaching resistance.", Symbol(), time(Period()), ordinal(count_zone_1_from_below)));
         }
     }
 
-    if (zone == 3 && !priorCandleWasInZone(3)) {
-        if (priorCandleWasInZone(4)) {
+    if (zone == 1 && !priorCandleWasInZone(1)) {
+        if (priorCandleWasInZone(0)) {
             count_zone_3_from_below += 1;
-            notify(StringFormat("%s %s candle coming up to support after downside break, %s attempt.", Symbol(), Period(), ordinal(count_zone_3_from_below)));
+            notify(StringFormat("%s %s candle coming up to support after downside break, %s attempt.", Symbol(), time(Period()), ordinal(count_zone_3_from_below)));
         } else {
             count_zone_3_from_above += 1;
-            notify(StringFormat("%s %s candle %s attempt at approaching support.", Symbol(), Period(), ordinal(count_zone_3_from_above)));
+            notify(StringFormat("%s %s candle %s attempt at approaching support.", Symbol(), time(Period()), ordinal(count_zone_3_from_above)));
         }
     }
 }
@@ -128,6 +128,14 @@ string ordinal(int i) {
         return StringFormat("%drd", i);
     } else {
         return StringFormat("%dth", i);
+    }
+}
+
+string time(int mins) {
+    if (mins < 60) {
+        return StringFormat("%d min", mins);
+    } else {
+        return StringFormat("%d hour", mins / 60);
     }
 }
 
