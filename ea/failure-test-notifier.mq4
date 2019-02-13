@@ -79,9 +79,9 @@ void OnTick() {
     if (isNewCandle()) { 
         double open = Open[1];
         double close = Close[1];
-        if (Open[1] < zone_boundaries[0] + buffer && Close[1] >= zone_boundaries[0] + buffer) {
+        if (Open[1] < zone_boundaries[3] + buffer && Close[1] >= zone_boundaries[3] + buffer) {
             notify(StringFormat("%s %s candle closed above resistance.", Symbol(), Period()), false);
-        } else if (Open[1] > zone_boundaries[3] - buffer && Close[1] <= zone_boundaries[3] + buffer) {
+        } else if (Open[1] > zone_boundaries[0] - buffer && Close[1] <= zone_boundaries[0] + buffer) {
             notify(StringFormat("%s %s candle closed below support.", Symbol(), Period()), false);
         }
     }
