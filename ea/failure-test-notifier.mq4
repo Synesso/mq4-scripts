@@ -88,7 +88,7 @@ void OnTick() {
 
     if (notifiedThisCandle()) { return; }
 
-    int zone = zoneForPrice(Ask);
+    int zone = zoneForPrice(Bid);
 
     if (zone == 3 && !priorCandleWasInZone(3)) {
         if (priorCandleWasInZone(4)) {
