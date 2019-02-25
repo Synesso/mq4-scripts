@@ -129,8 +129,16 @@ void OnDeinit(const int reason) {
 
 bool selectOrder(string symbol, double open, double sl, double tp) {
     bool found = false;
+    Print("[multitp] selecting order, looking for symbol=", symbol, ", open=", open, ", sl=", sl, ", tp=", tp);
+
     for (int i = 0; i < OrdersTotal() && !found; i++) {
-        if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) 
+
+        bool selected = OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+
+        Print("[multitp] selecting order, checking #", i, ": selected=", selected, ", symbol=", OrderSymbol(), 
+            ", open=", OrderOpenPrice(), ", sl=", OrderStopLoss(), ", tp=", OrderTakeProfit());
+
+        if (selected
             && OrderSymbol() == symbol
             && OrderOpenPrice() == open
             && OrderStopLoss() == sl
@@ -141,17 +149,4 @@ bool selectOrder(string symbol, double open, double sl, double tp) {
         }
     }
     return found;
-}
-
-int selectOrderOld() {
-    int num_open_orders = 0;
-    for (int i = 0; i < OrdersTotal(); i++) {
-        if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) && OrderSymbol() == Symbol()) {
-            order_number = OrderTicket();
-            Print("Selected ticket " + DoubleToString(order_number));
-            num_open_orders += 1;
-        }
-    }
-    ensure(OrderSelect(order_number, SELECT_BY_TICKET), "trouble selecting previously found order");
-    return num_open_orders;
 }
