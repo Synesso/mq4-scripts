@@ -12,6 +12,9 @@ long chart_id;
 int  order_number;
 
 int OnInit() {
+    ensure(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED), "Check if automated trading is allowed in the terminal settings!");
+    ensure(MQLInfoInteger(MQL_TRADE_ALLOWED), StringFormat("Automated trading is forbidden in the program settings for %s",__FILE__));
+
     order_number = order_num;
     require(OrderSelect(order_number, SELECT_BY_TICKET), "cannot select order" + IntegerToString(order_number));
 
