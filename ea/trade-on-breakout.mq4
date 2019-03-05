@@ -25,6 +25,9 @@ int             bars_on_chart;
 long            chart_id;
 
 int OnInit() {
+    ensure(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED), "Check if automated trading is allowed in the terminal settings!");
+    ensure(MQLInfoInteger(MQL_TRADE_ALLOWED), StringFormat("Automated trading is forbidden in the program settings for %s", __FILE__));
+
     if (stop_loss < open && open < take_profit) {
         direction = LONG;
         trigger = breakout_level + buffer;
