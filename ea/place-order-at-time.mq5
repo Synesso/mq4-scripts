@@ -2,6 +2,7 @@
 
 input datetime execute_server_time;
 input double size;
+input double buy_stop;
 input double tp;
 input double sl;
 
@@ -25,8 +26,8 @@ void OnTimer() {
         request.volume = size;
         request.sl = sl;
         request.tp = tp;
-        request.type = ORDER_TYPE_BUY;
-        request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+        request.type = ORDER_TYPE_BUY_STOP;
+        request.price = buy_stop;
         request.magic = MAGIC;
         request.type_filling = ORDER_FILLING_IOC;
 
