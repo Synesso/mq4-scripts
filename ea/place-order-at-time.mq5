@@ -21,7 +21,7 @@ void OnTimer() {
     if (TimeCurrent() >= execute_server_time) {
         MqlTradeResult result = {0};
         MqlTradeRequest request = {0};
-        request.action = TRADE_ACTION_DEAL;
+        request.action = TRADE_ACTION_PENDING;
         request.symbol = _Symbol;
         request.volume = size;
         request.sl = sl;
