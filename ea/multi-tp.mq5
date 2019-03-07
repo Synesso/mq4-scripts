@@ -1,5 +1,8 @@
 #include <MT4Orders.mqh>
 
+#define Bid SymbolInfoDouble(_Symbol, SYMBOL_BID)
+#define Ask SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+
 #property link "chenandjem@loftinspace.com.au"
 #property strict
 
