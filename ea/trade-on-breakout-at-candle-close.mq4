@@ -1,5 +1,4 @@
 //+------------------------------------------------------------------+
-//|                                            trade_on_breakout.mq4 |
 //|                                    chenandjem@loftinspace.com.au |
 //|                                               loftinspace.com.au |
 //+------------------------------------------------------------------+
@@ -10,7 +9,7 @@
 
 input double    breakout_level;
 input double    lots = 0.1;
-input double    open;
+input double    open_buffer = 0.00002;
 input double    stop_loss;
 input double    take_profit;
 input double    buffer = 0.0005;
@@ -28,11 +27,11 @@ int OnInit() {
     ensure(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED), "Check if automated trading is allowed in the terminal settings!");
     ensure(MQLInfoInteger(MQL_TRADE_ALLOWED), StringFormat("Automated trading is forbidden in the program settings for %s", __FILE__));
 
-    if (stop_loss < open && open < take_profit) {
+    if (stop_loss < take_profit) {
         direction = LONG;
         trigger = breakout_level + buffer;
         Print("Direction is Long. Trigger is ", trigger);
-    } else if (stop_loss > open && open > take_profit) {
+    } else if (stop_loss > take_profit) {
         direction = SHORT;
         trigger = breakout_level - buffer;
         Print("Direction is Short. Trigger is ", trigger);
@@ -43,19 +42,19 @@ int OnInit() {
 
     chart_id = ChartID();
     
-    double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
-    require(MathAbs(trigger - open) >= minimum_stop, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop));
-    require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
-    require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
+    // double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
+    // require(MathAbs(trigger - open) >= minimum_stop, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop));
+    // require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
+    // require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
 
     ObjectCreate("breakout_level", OBJ_HLINE, 0, Time[0], breakout_level, 0, 0);
     ObjectCreate("trigger", OBJ_HLINE, 0, Time[0], trigger, 0, 0);
-    ObjectCreate("open", OBJ_HLINE, 0, Time[0], open, 0, 0);
+    // ObjectCreate("open", OBJ_HLINE, 0, Time[0], open, 0, 0);
     ObjectCreate("stop_loss", OBJ_HLINE, 0, Time[0], stop_loss, 0, 0);
     ObjectCreate("take_profit", OBJ_HLINE, 0, Time[0], take_profit, 0, 0);
 
-    ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrDodgerBlue);
-    ObjectSetInteger(chart_id, "open", OBJPROP_STYLE, STYLE_DOT);
+    // ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrDodgerBlue);
+    // ObjectSetInteger(chart_id, "open", OBJPROP_STYLE, STYLE_DOT);
     ObjectSetInteger(chart_id, "stop_loss", OBJPROP_COLOR, clrPaleVioletRed);
     ObjectSetInteger(chart_id, "stop_loss", OBJPROP_STYLE, STYLE_DOT);
     ObjectSetInteger(chart_id, "take_profit", OBJPROP_COLOR, clrSeaGreen);
@@ -72,9 +71,9 @@ void OnTick() {
         if (direction == LONG && Close[1] > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
-                Symbol(), lots, open, slippage, stop_loss, take_profit
+                Symbol(), lots, Ask - open_buffer, slippage, stop_loss, take_profit
             ));
-            int ticket = OrderSend(Symbol(), OP_BUYLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
+            int ticket = OrderSend(Symbol(), OP_BUYLIMIT, lots, Ask - open_buffer, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
             if (ticket < 0) {
                 SendNotification("Unable to create buy limit order: " + IntegerToString(GetLastError()));
             }
@@ -82,9 +81,9 @@ void OnTick() {
         } else if (direction == SHORT && Close[1] < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
-                Symbol(), lots, open, slippage, stop_loss, take_profit
+                Symbol(), lots, Bid + open_buffer, slippage, stop_loss, take_profit
             ));
-            int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, open, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
+            int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, Bid + open_buffer, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
             if (ticket < 0) {
                 SendNotification("Unable to create sell limit order: " + IntegerToString(GetLastError()));
             }
@@ -127,7 +126,7 @@ bool ensure(bool predicate, string msg) {
 }
 
 void OnDeinit(const int reason) {
-    ObjectDelete(chart_id, "open");
+    // ObjectDelete(chart_id, "open");
     ObjectDelete(chart_id, "stop_loss");
     ObjectDelete(chart_id, "take_profit");
     ObjectDelete(chart_id, "breakout_level");
