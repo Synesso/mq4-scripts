@@ -73,7 +73,7 @@ int OnInit() {
 
 void OnTick() {
     if (isNewCandle()) {
-        if (direction == LONG && Close[1] > trigger) {
+        if (direction == LONG && iClose(NULL, PERIOD_CURRENT, 1) > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
@@ -83,7 +83,7 @@ void OnTick() {
                 SendNotification("Unable to create buy limit order: " + IntegerToString(GetLastError()));
             }
             ExpertRemove();
-        } else if (direction == SHORT && Close[1] < trigger) {
+        } else if (direction == SHORT && iClose(NULL, PERIOD_CURRENT, 1) < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
             Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, open, slippage, stop_loss, take_profit
@@ -98,8 +98,8 @@ void OnTick() {
 }
 
 bool isNewCandle() {
-    bool isNew = bars_on_chart != Bars;
-    bars_on_chart = Bars;
+    bool isNew = bars_on_chart != Bars(_Symbol,_Period);
+    bars_on_chart = Bars(_Symbol,_Period);
     return(isNew);
 }
 
