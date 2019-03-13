@@ -3,10 +3,10 @@
 //|                                               loftinspace.com.au |
 //+------------------------------------------------------------------+
 #include <MT4Orders.mqh>
-#
+
 #define Bid SymbolInfoDouble(_Symbol, SYMBOL_BID)
 #define Ask SymbolInfoDouble(_Symbol, SYMBOL_ASK)
-#
+
 #property copyright "chenandjem@loftinspace.com.au"
 #property link      "loftinspace.com.au"
 #property version   "1.00"
@@ -47,19 +47,11 @@ int OnInit() {
 
     chart_id = ChartID();
     
-    // double minimum_stop = MarketInfo(Symbol(), MODE_STOPLEVEL);
-    // require(MathAbs(trigger - open) >= minimum_stop, StringFormat("Open is too close to trigger. Must be at least %f", minimum_stop));
-    // require(MathAbs(open - stop_loss) >= minimum_stop, StringFormat("Stop loss is too close to open. Must be at least %f", minimum_stop));
-    // require(MathAbs(open - take_profit) >= minimum_stop, StringFormat("Take profit is too close to open. Must be at least %f", minimum_stop));
+    ObjectCreate("breakout_level", OBJ_HLINE, 0, iTime(_Symbol, _Period, 0), breakout_level, 0, 0);
+    ObjectCreate("trigger", OBJ_HLINE, 0,  iTime(_Symbol, _Period, 0), trigger, 0, 0);
+    ObjectCreate("stop_loss", OBJ_HLINE, 0,  iTime(_Symbol, _Period, 0), stop_loss, 0, 0);
+    ObjectCreate("take_profit", OBJ_HLINE, 0,  iTime(_Symbol, _Period, 0), take_profit, 0, 0);
 
-    ObjectCreate("breakout_level", OBJ_HLINE, 0, Time[0], breakout_level, 0, 0);
-    ObjectCreate("trigger", OBJ_HLINE, 0, Time[0], trigger, 0, 0);
-    // ObjectCreate("open", OBJ_HLINE, 0, Time[0], open, 0, 0);
-    ObjectCreate("stop_loss", OBJ_HLINE, 0, Time[0], stop_loss, 0, 0);
-    ObjectCreate("take_profit", OBJ_HLINE, 0, Time[0], take_profit, 0, 0);
-
-    // ObjectSetInteger(chart_id, "open", OBJPROP_COLOR, clrDodgerBlue);
-    // ObjectSetInteger(chart_id, "open", OBJPROP_STYLE, STYLE_DOT);
     ObjectSetInteger(chart_id, "stop_loss", OBJPROP_COLOR, clrPaleVioletRed);
     ObjectSetInteger(chart_id, "stop_loss", OBJPROP_STYLE, STYLE_DOT);
     ObjectSetInteger(chart_id, "take_profit", OBJPROP_COLOR, clrSeaGreen);
