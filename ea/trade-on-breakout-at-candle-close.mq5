@@ -35,11 +35,11 @@ int OnInit() {
     if (stop_loss < take_profit) {
         direction = LONG;
         trigger = breakout_level + buffer;
-        Print("Direction is Long. Trigger is ", trigger);
+        Print("[tob@candle-close] Direction is Long. Trigger is ", trigger);
     } else if (stop_loss > take_profit) {
         direction = SHORT;
         trigger = breakout_level - buffer;
-        Print("Direction is Short. Trigger is ", trigger);
+        Print("[tob@candle-close] Direction is Short. Trigger is ", trigger);
     } else {
         MessageBox("Exiting: Cannot determine if direction is short or long. Must match (tp > open > sl) or (tp < open < sl)");
         ExpertRemove();
@@ -47,6 +47,9 @@ int OnInit() {
 
     chart_id = ChartID();
     
+    Print(StringFormat("[tob@candle-close] Config: breakout_level=%d, lots=%d, open_buffer=%d, sl=%d, tp=%d, buffer=%d", 
+        breakout_level, lots, open_buffer, stop_loss, take_profit, buffer));
+
     ObjectCreate("breakout_level", OBJ_HLINE, 0, iTime(_Symbol, _Period, 0), breakout_level, 0, 0);
     ObjectCreate("trigger", OBJ_HLINE, 0,  iTime(_Symbol, _Period, 0), trigger, 0, 0);
     ObjectCreate("stop_loss", OBJ_HLINE, 0,  iTime(_Symbol, _Period, 0), stop_loss, 0, 0);
@@ -67,7 +70,7 @@ void OnTick() {
     if (isNewCandle()) {
         if (direction == LONG && iClose(NULL, PERIOD_CURRENT, 1) > trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            Print(StringFormat("Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
+            Print(StringFormat("[tob@candle-close] Issuing OrderSend(%s, OP_BUYLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, Ask - open_buffer, slippage, stop_loss, take_profit
             ));
             int ticket = OrderSend(Symbol(), OP_BUYLIMIT, lots, Ask - open_buffer, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
@@ -77,7 +80,7 @@ void OnTick() {
             ExpertRemove();
         } else if (direction == SHORT && iClose(NULL, PERIOD_CURRENT, 1) < trigger) {
             int slippage = int(2.0 * (Ask - Bid) / _Point);
-            Print(StringFormat("Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
+            Print(StringFormat("[tob@candle-close] Issuing OrderSend(%s, OP_SELLLIMIT, lots=%f, open=%f, slippage=%d, stop_loss=%f, take_profit=%f)",
                 Symbol(), lots, Bid + open_buffer, slippage, stop_loss, take_profit
             ));
             int ticket = OrderSend(Symbol(), OP_SELLLIMIT, lots, Bid + open_buffer, slippage, stop_loss, take_profit, "trade_on_breakout_EA");
@@ -107,7 +110,7 @@ int selectOrder() {
     for (int i = 0; i < OrdersTotal(); i++) { 
         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) && OrderSymbol() == Symbol()) {
             order_ticket_number = OrderTicket();
-            Print("Selected ticket " + DoubleToString(order_ticket_number));
+            Print("[tob@candle-close] Selected ticket " + DoubleToString(order_ticket_number));
             num_open_orders += 1;
         }
     }
