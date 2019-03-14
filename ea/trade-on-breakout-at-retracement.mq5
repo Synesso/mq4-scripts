@@ -47,7 +47,7 @@ int OnInit() {
 
     chart_id = ChartID();
 
-    Print(StringFormat("[tob@retrace] Config: breakout_level=%d, lots=%d, open=%d, sl=%d, tp=%d, buffer=%d", 
+    Print(StringFormat("[tob@retrace] Config: breakout_level=%f, lots=%f, open=%f, sl=%f, tp=%f, buffer=%f", 
         breakout_level, lots, open, stop_loss, take_profit, buffer));
 
     // todo - this is yet to be converted to mq5

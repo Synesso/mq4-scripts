@@ -47,7 +47,7 @@ int OnInit() {
 
     chart_id = ChartID();
     
-    Print(StringFormat("[tob@candle-close] Config: breakout_level=%d, lots=%d, open_buffer=%d, sl=%d, tp=%d, buffer=%d", 
+    Print(StringFormat("[tob@candle-close] Config: breakout_level=%f, lots=%f, open_buffer=%f, sl=%f, tp=%f, buffer=%f", 
         breakout_level, lots, open_buffer, stop_loss, take_profit, buffer));
 
     ObjectCreate("breakout_level", OBJ_HLINE, 0, iTime(_Symbol, _Period, 0), breakout_level, 0, 0);
